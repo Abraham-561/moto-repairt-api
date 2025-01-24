@@ -1,11 +1,83 @@
+import { Role, Status, User } from "../../data/postgres/models/user.model";
+import { CustomError } from "../../domain";
+import { CreateUserDTO } from "../../domain/dtos/users/create-user.dto";
+
+import { UpdateUserDTO } from "../../domain/dtos/users/update-user.dto";
+
 export class UserService {
-    async findOne(id:string) {}
+    async findOne(id:string) {
+      const user = await User.findOne({
+        where: {
+          status: Status.AVAILABLE,id:id,
+        },
+      });
+      if(!user){
+        throw CustomError.notFoud("User Not found")
+      }
+      return user
+    }
 
-     async findAll() {}
+     async findAll() {
+      try {
+        const users = await User.find({
+          where: {
+            status:Status.AVAILABLE,
+          },
+        });
+        return users;
+        
+      } catch (error) {
+        throw CustomError.internalServer("Error fetching users")
+      }
+     }
 
-     async create(data:any) {}
+     async create(data: CreateUserDTO) {
+      const user = new User()
+      user.name = data.name 
+      user.email = data.email
+      user.password = data.password
+      user.role = data.role
+      
+      try {
+        return await user.save();
 
-   async update(id:string, data:any) {}
+        
+      } catch (error) {
+        throw CustomError.internalServer("Error crating user")
+        
+      }
 
-    async delete(id:string) {}
+     }
+
+   async update(id:string, data:UpdateUserDTO) {
+    const user = await this.findOne(id)
+
+    user.name = data.name
+    user.email = data.email
+
+    try {
+      await user.save()
+      return {
+        message : "user updated"
+      }
+      
+    } catch (error) {
+      throw CustomError.internalServer("error updating user")
+    }
+   }
+
+    async delete(id:string) {
+      const user = await this.findOne(id)
+
+      user.status = Status.DISABLE
+
+      try {
+        await user.save()
+        return { ok:true}
+        
+      } catch (error) {
+        throw CustomError.internalServer("Error deleting user")
+        
+      }
+    }
 }

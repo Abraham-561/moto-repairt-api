@@ -1,73 +1,62 @@
 import { Request, Response } from "express";
+import { RepairService } from "../services/repair.service";
+import { CustomError } from "../../domain";
+import { CreateRepairDTO } from "../../domain";
 
 
-export class RepairsController {
-    constructor() {}
+export class RepairController {
+  constructor(private readonly repairService: RepairService) {}
 
-    // Crear reparación
-    createRepair =  (req: Request, res: Response) => {
-        const { date, userId } = req.body;
+  private handleError = (error: unknown, res: Response) => {
+    if (error instanceof CustomError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
 
-        if (!date || !userId) {
-            return res.status(400).json({ message: "Faltan campos obligatorios: date y userId" });
-        }
-        return res.status(201).json({
-            message: "Reparación creada con éxito",
-            repair: { date, userId, status: "pending" },
-        });
-    };
+    console.log(error);
+    return res.status(500).json({ message: "Something went very wrong! 🔧" });
+  };
 
-    // Obtener lista de reparaciones pendientes
-    getRepairs =  (_req: Request, res: Response) => {
-        
-        return res.status(200).json({
-            message: "Lista de reparaciones pendientes",
-            repairs: [], 
-        });
-    };
+  findAllRepairs = (req: Request, res: Response) => {
+    this.repairService
+      .findAll()
+      .then((data) => res.status(200).json(data))
+      .catch((error: any) => this.handleError(error, res));
+  };
 
-    // Obtener reparación por ID
-    getRepairById =  (req: Request, res: Response) => {
-        const { id } = req.params;
+  findOneRepair = (req: Request, res: Response) => {
+    const { id } = req.params;
 
-        if (!id) {
-            return res.status(400).json({ message: "Se requiere un ID válido" });
-        }
+    this.repairService.findOne(id).then((data) => res.status(200).json(data))
+    .catch((error: any) => this.handleError(error, res));
+  };
 
-        
-        return res.status(200).json({
-            message: "Reparación encontrada",
-            repair: { id }, 
-        });
-    };
-
-    // Actualizar reparación a completada
-    updateRepair =  (req: Request, res: Response) => {
-        const { id } = req.params;
-
-        if (!id) {
-            return res.status(400).json({ message: "Se requiere un ID válido" });
-        }
-
-        
-        return res.status(200).json({
-            message: "Reparación actualizada a completada",
-            repair: { id, status: "completed" }, 
-        });
-    };
-
-    // Cancelar reparación
-    cancelRepair =  (req: Request, res: Response) => {
-        const { id } = req.params;
-
-        if (!id) {
-            return res.status(400).json({ message: "Se requiere un ID válido" });
-        }
-
-       
-        return res.status(200).json({
-            message: "Reparación cancelada",
-            repair: { id, status: "cancelled" }, 
-        });
-    };
+  createRepair = (req: Request, res: Response) => {
+    const [error, createRepairDto] = CreateRepairDTO.create(req.body);
+  
+    if (error) return res.status(422).json({ message: error });
+  
+    this.repairService
+      .create(createRepairDto!)
+      .then((data) => res.status(200).json(data))
+      .catch((error: any) => this.handleError(error, res));
+  };
+  
+  updateRepair = (req: Request, res: Response) => {
+    const { id } = req.params;
+  
+    this.repairService
+      .update(id)
+      .then((data) => res.status(200).json(data))
+      .catch((error: any) => this.handleError(error, res));
+  };
+  
+  delete = (req: Request, res: Response) => {
+    const { id } = req.params;
+  
+    this.repairService
+      .delete(id)
+      .then((data) => res.status(204).json(null))
+      .catch((error: any) => this.handleError(error, res));
+  };
+  
 }

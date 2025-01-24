@@ -1,18 +1,20 @@
 import { Router } from "express";
-import { RepairsController } from "./controller.repair";
+import { RepairController } from "./controller.repair";
+import { RepairService } from "../services/repair.service";
 
-export class RepairsRouter {
-    static get routes(): Router {
-        const router = Router();
-        const repairsController = new RepairsController();
+export class RepairRoutes {
+  static get routes(): Router {
+    const router = Router();
+    const repairService = new RepairService()
+    const repairsController = new RepairController(repairService);
 
-        // Endpoints 
-        router.get('/', repairsController.getRepairs); // reparaciones pendientes
-        router.get('/:id', repairsController.getRepairById); //  reparación por ID
-        router.post('/', repairsController.createRepair); // Crear una nueva reparación
-        router.patch('/:id', repairsController.updateRepair); // Actualizar reparación 
-        router.delete('/:id', repairsController.cancelRepair); // Cancelar reparación
+    router.get("/", repairsController.findAllRepairs)
+    router.get("/:id", repairsController.findOneRepair)
+    router.post("/", repairsController.createRepair)
+    router.patch("/:id", repairsController.updateRepair)
+    router.delete("/:id", repairsController.delete)
 
-        return router;
-    }
+    return router;
+  }
 }
+

@@ -11,7 +11,7 @@ export class CustomError extends Error {
     static unAuthorized(message:string) {
         return new CustomError(message,403)
     }
-    static uforbiden(message:string) {
+    static notFoud(message:string) {
         return new CustomError(message,404)
     }
     static internalServer (message:string) {
