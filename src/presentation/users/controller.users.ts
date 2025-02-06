@@ -57,5 +57,14 @@ export class UsersController {
 
         this.userService.delete(id) .then((data) => res.status(204).json(data))
         .catch((error: any) => this.handleError(error,res))
+
+    }
+
+    loginUser =  (req: Request, res: Response) => {
+        const { email, password } = req.params
+
+        this.userService.login(email,password).then((data) => res.status(204).json(data))
+        .catch((error: any) => this.handleError(error,res))
+
     }
 } 

@@ -1,8 +1,11 @@
+import { ifError } from "assert";
 import { Role, Status, User } from "../../data/postgres/models/user.model";
 import { CustomError } from "../../domain";
 import { CreateUserDTO } from "../../domain/dtos/users/create-user.dto";
 
 import { UpdateUserDTO } from "../../domain/dtos/users/update-user.dto";
+import { bcryptAdapter } from "../../config/encrypt";
+import { JwtAdapter } from "../../config/jwt.adapter";
 
 export class UserService {
     async findOne(id:string) {
@@ -39,7 +42,13 @@ export class UserService {
       user.role = data.role
       
       try {
-        return await user.save();
+        const newUser = await user.save();
+        return {
+          id: newUser.id,
+          name:newUser.name,
+          email:newUser.email,
+          role:newUser.role
+        }
 
         
       } catch (error) {
@@ -79,5 +88,31 @@ export class UserService {
         throw CustomError.internalServer("Error deleting user")
         
       }
+    }
+
+    async login(email:string , password:string) {
+        const user = await this.findUserByEmail(email)
+        const isMatching= await bcryptAdapter.compare(password, user.password)
+        if (!isMatching) throw CustomError.unAuthorized("Invalid Credentials")
+
+          const token = await JwtAdapter.generateToken({id: user.id})
+          if (!token) throw CustomError.internalServer("Error genating token")
+            return {
+          token,
+        }
+    }
+    async  findUserByEmail(email:string) {
+      const user= await User.findOne({
+        where: {
+          email, 
+          status: Status.AVAILABLE
+        }, 
+
+      });
+      if (!user) {
+        throw CustomError.notFoud("User not found")
+        
+      }
+      return user
     }
 }
