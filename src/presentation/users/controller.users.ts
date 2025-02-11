@@ -4,6 +4,7 @@ import { UserService } from "../services/user.service";
 
 import { UpdateUserDTO } from "../../domain/dtos/users/update-user.dto";
 import { CreateUserDTO } from "../../domain/dtos/users/create-user.dto";
+import { protectAccountOwner } from "../../config/validate-owner";
 
 
 
@@ -45,17 +46,38 @@ export class UsersController {
             .catch((error: any) => this.handleError(error, res))
     }
     updateUser = (req: Request, res: Response) => {
-        const { id } = req.params
-        const [error, updateUserDto] = UpdateUserDTO.create(req.body)
-        if (error) return res.status(422).json({ message: error })
-        this.userService.update(id, updateUserDto!).then((data) => res.status(200).json(data))
-            .catch((error: any) => this.handleError(error, res))
-    }
+        const { id } = req.params;
+        const sessionUserId = req.body.sessionUserId;
+      
+        console.log(sessionUserId, id)
+        if (!protectAccountOwner(id, sessionUserId)) {
+          return res
+            .status(401)
+            .json({ message: "You are not the owner of this account" });
+        }
+      
+        const [error, updateUserDto] = UpdateUserDTO.create(req.body);
+      
+        if (error) return res.status(422).json({ message: error });
+      
+        this.userService
+          .update(id, updateUserDto!)
+          .then((data) => res.status(200).json(data))
+          .catch((error: any) => this.handleError(error, res));
+      };
+      
 
     deleteUser = (req: Request, res: Response) => {
         const { id } = req.params
+        const sessionUserId = req.body.sessionUserId.id
 
-        this.userService.delete(id) .then((data) => res.status(204).json(data))
+        if (!protectAccountOwner(id,sessionUserId)  ) {
+          return res.status(401).json({message: "You are not the owner of this account"})
+          
+        }
+
+        this.userService.delete(id) 
+        .then((data) => res.status(204).json(data))
         .catch((error: any) => this.handleError(error,res))
 
     }

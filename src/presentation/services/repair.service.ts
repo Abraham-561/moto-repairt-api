@@ -1,14 +1,27 @@
 import { Repair, RepairStatus } from "../../data/postgres/models/repair.model";
 import { CreateRepairDTO, CustomError } from "../../domain";
-
+import { In } from "typeorm";
 export class RepairService {
   async findAll() {
     try {
       return await Repair.find({
         where: {
-          status: RepairStatus.PENDING,
+          status: In([RepairStatus.PENDING, RepairStatus.COMPLETED]),
         },
+        relations: {
+          user: true,
+        },
+        select: {
+          user: {
+            id:true,
+            name:true,
+            email:true,
+            role:true,
+          },
+        }
       });
+    
+    
     } catch (error) {
       throw CustomError.internalServer("Error fetching repair data");
     }

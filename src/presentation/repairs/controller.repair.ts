@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { RepairService } from "../services/repair.service";
 import { CustomError } from "../../domain";
 import { CreateRepairDTO } from "../../domain";
+import { protectAccountOwner } from "../../config/validate-owner";
 
 
 export class RepairController {
@@ -43,6 +44,9 @@ export class RepairController {
   
   updateRepair = (req: Request, res: Response) => {
     const { id } = req.params;
+   
+    
+
   
     this.repairService
       .update(id)
@@ -52,6 +56,7 @@ export class RepairController {
   
   delete = (req: Request, res: Response) => {
     const { id } = req.params;
+  
   
     this.repairService
       .delete(id)
